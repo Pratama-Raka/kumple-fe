@@ -1,122 +1,81 @@
-import { useState } from 'react'
-import heroImg from './assets/hero.png'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import './App.css'
+import { useEffect } from "react";
+import { BrowserRouter, Navigate, Route, Routes, useLocation, useSearchParams } from "react-router-dom";
+import AboutPage from "./pages/AboutPage";
+import AuthPage from "./pages/AuthPage";
+import CreateEventPage from "./pages/CreateEventPage";
+import EventDetailPage from "./pages/EventDetailPage";
+import EventsPage from "./pages/EventsPage";
+import GameDetailPage from "./pages/GameDetailPage";
+import GamesPage from "./pages/GamesPage";
+import HomePage from "./pages/HomePage";
+import NotFoundPage from "./pages/NotFoundPage";
+import Footer from "./components/Footer";
+import Header from "./components/Header";
+import { EventProvider } from "./context/EventProvider";
+import { useEvents } from "./context/useEvents";
+import { games } from "./data";
 
-function App() {
-  const [count, setCount] = useState(0)
-
-  return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
-        </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.jsx</code> and save to test <code>HMR</code>
-          </p>
-        </div>
-        <button
-          type="button"
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
-      </section>
-
-      <div className="ticks"></div>
-
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
-
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
-  )
+function LegacyGameDetail() {
+	const [searchParams] = useSearchParams();
+	return <Navigate to={`/games/${searchParams.get("id") || "catan"}`} replace />;
 }
 
-export default App
+function LegacyEventDetail() {
+	const [searchParams] = useSearchParams();
+	return <Navigate to={`/events/${searchParams.get("id") || "strategy-night"}`} replace />;
+}
+
+function AppRoutes() {
+	const location = useLocation();
+	const { events } = useEvents();
+	const path = location.pathname;
+
+	useEffect(() => {
+		const titles = {
+			"/": "Cari Teman Main Boardgame di Bandung | Kumple",
+			"/games": "Katalog Game | Kumple",
+			"/events": "Event | Kumple",
+			"/events/new": "Buat Event Baru | Kumple",
+			"/about": "Tentang Kumple",
+			"/login": "Log In Kumple",
+			"/register": "Register Kumple",
+		};
+		const gameMatch = path.match(/^\/games\/([^/]+)$/);
+		const eventMatch = path.match(/^\/events\/([^/]+)$/);
+		const game = gameMatch ? games.find((item) => item.id === gameMatch[1]) : null;
+		const event = eventMatch ? events.find((item) => item.id === eventMatch[1]) : null;
+		document.title = game ? `${game.name} | Detail Game | Kumple` : event ? `${event.title} | Kumple` : titles[path] || "Kumple";
+	}, [events, path]);
+
+	return (
+		<>
+			<Header />
+			<Routes>
+				<Route path="/" element={<HomePage />} />
+				<Route path="/games" element={<GamesPage />} />
+				<Route path="/games/:gameId" element={<GameDetailPage />} />
+				<Route path="/events" element={<EventsPage />} />
+				<Route path="/events/new" element={<CreateEventPage />} />
+				<Route path="/events/:eventId" element={<EventDetailPage />} />
+				<Route path="/about" element={<AboutPage />} />
+				<Route path="/login" element={<AuthPage />} />
+				<Route path="/register" element={<AuthPage isRegister />} />
+				<Route path="/index.html" element={<Navigate to="/" replace />} />
+				<Route path="/games.html" element={<Navigate to="/games" replace />} />
+				<Route path="/events.html" element={<Navigate to="/events" replace />} />
+				<Route path="/game-detail.html" element={<LegacyGameDetail />} />
+				<Route path="/event-detail.html" element={<LegacyEventDetail />} />
+				<Route path="/create-event.html" element={<Navigate to="/events/new" replace />} />
+				<Route path="/about.html" element={<Navigate to="/about" replace />} />
+				<Route path="/login.html" element={<Navigate to="/login" replace />} />
+				<Route path="/register.html" element={<Navigate to="/register" replace />} />
+				<Route path="*" element={<NotFoundPage />} />
+			</Routes>
+			<Footer />
+		</>
+	);
+}
+
+export default function App() {
+	return <BrowserRouter><EventProvider><AppRoutes /></EventProvider></BrowserRouter>;
+}
